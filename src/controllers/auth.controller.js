@@ -7,7 +7,7 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 const signup = async (req, res) => {
   try {
-    const { email, username, password } = req.body;
+    const { email, username, password, fullname } = req.body;
     
     const existingUser = await userRepo.getUserByUsername(username);
     if (existingUser) return res.status(400).json({ error: 'Username taken' });
@@ -19,6 +19,7 @@ const signup = async (req, res) => {
 
     await userRepo.createUser({
       username,
+      fullname,
       email,
       passwordHash,
       otpHash,
