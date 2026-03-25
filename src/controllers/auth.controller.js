@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const userRepo = require("../db/users.repo");
 const { sendOTP } = require("../config/mail");
-const { generateToken } = require("../utils/jwt");
+const { generateToken, verifyToken } = require("../utils/jwt");
 
 const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
@@ -86,4 +86,19 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { signup, verifyOtp, login };
+const verifyJwt = (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Access denied. No token provided." });
+  }
+
+  try {
+    const decoded = verifyToken(token);
+    return res.status(200).json({ valid: true, user: decoded });
+  } catch (error) {
+    return res.status(400).json({ valid: false, error: "Invalid token." });
+  }
+};
+
+module.exports = { signup, verifyOtp, login, verifyJwt };
