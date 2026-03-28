@@ -7,6 +7,7 @@ const userRoutes = require('./routes/user.routes');
 const personalPlaylistRoutes = require('./routes/personalPlaylist.routes');
 const publicPlaylistRoutes = require('./routes/publicPlaylist.routes');
 const chatRoutes = require('./routes/chat.routes');
+const friendRoutes = require('./routes/friends.routes');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/personal-playlists', personalPlaylistRoutes);
 app.use('/api/public-playlists', publicPlaylistRoutes);
 app.use('/api/chats', chatRoutes);
+app.use('/api/friends', friendRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK' });

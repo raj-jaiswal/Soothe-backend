@@ -88,6 +88,7 @@ const login = async (req, res) => {
 
 const verifyJwt = (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
+  console.log("Verifying User");
 
   if (!token) {
     return res.status(401).json({ error: "Access denied. No token provided." });
