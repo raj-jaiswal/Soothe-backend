@@ -3,6 +3,7 @@ const router = express.Router();
 const chatController = require('../controllers/chat.controller');
 const authenticate = require('../middleware/auth.middleware');
 
+router.get('/', authenticate, chatController.getUserChats);
 router.get('/:chatId/messages', authenticate, chatController.getChatHistory);
 
 module.exports = router;

@@ -1,7 +1,6 @@
 const { dynamoDB } = require('../config/aws');
 const TABLE = process.env.USERS_TABLE;
 
-// Helper to fetch user
 const getUser = async (username) => {
   const result = await dynamoDB.get({
     TableName: TABLE,
@@ -10,7 +9,6 @@ const getUser = async (username) => {
   return result.Item;
 };
 
-// Helper to save user
 const saveUser = async (userItem) => {
   await dynamoDB.put({
     TableName: TABLE,
@@ -18,38 +16,38 @@ const saveUser = async (userItem) => {
   }).promise();
 };
 
-// Search users by username or name (Limit 10)
 const searchUsers = async (query, currentUsername) => {
   const params = {
     TableName: TABLE,
+    // Using #nm to avoid reserved keyword conflicts
     FilterExpression: '(contains(username, :q) OR contains(#nm, :q)) AND username <> :cu',
-    ExpressionAttributeNames: { '#nm': 'name' },
+    ExpressionAttributeNames: { '#nm': 'fullname' }, // <-- CHANGED TO fullname
     ExpressionAttributeValues: { 
       ':q': query.toLowerCase(),
       ':cu': currentUsername 
     },
-    Limit: 10, // Returns top 10 results max
+    Limit: 10,
   };
   const result = await dynamoDB.scan(params).promise();
+  
   return result.Items.map(u => ({
     id: u.username,
-    name: u.name,
+    name: u.fullname || u.username,
     handle: `@${u.username}`,
   }));
 };
 
-// Fetch basic info for a list of usernames
 const getDetailedUsers = async (usernames) => {
   if (!usernames || usernames.length === 0) return [];
   
-  // DynamoDB BatchGetItem (up to 100 items per request)
   const keys = usernames.map(u => ({ PK: `USER#${u}`, SK: 'PROFILE' }));
   const params = { RequestItems: { [TABLE]: { Keys: keys } } };
   
   const result = await dynamoDB.batchGet(params).promise();
+  
   return result.Responses[TABLE].map(u => ({
     id: u.username,
-    name: u.name,
+    name: u.fullname || u.username, // <-- Safely map fullname to name for the frontend
     handle: `@${u.username}`
   }));
 };
@@ -72,14 +70,12 @@ const acceptFriendRequest = async (username, senderUsername) => {
 
   if (!user || !sender) throw new Error('User not found');
 
-  // Remove from user's requests and add to friends
   user.friendRequests = (user.friendRequests || []).filter(req => req !== senderUsername);
   
   if (!(user.friends || []).includes(senderUsername)) {
     user.friends = [...(user.friends || []), senderUsername];
   }
 
-  // Add user to sender's friends list
   if (!(sender.friends || []).includes(username)) {
     sender.friends = [...(sender.friends || []), username];
   }
