@@ -14,6 +14,12 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // Parses JSON request bodies
 
+// Increase the limit for JSON bodies to something like '50mb'
+app.use(express.json({ limit: '10mb' }));
+
+// If you are also using urlencoded, increase that too
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 // Register Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/songs', songRoutes);
