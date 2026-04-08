@@ -1,12 +1,20 @@
+// song.controller.js
 const { s3 } = require('../config/aws');
 const songRepo = require('../db/songs.repo');
 
 const getSongStreamUrl = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // 👇 ADD THIS LINE RIGHT HERE 👇
+    console.log(`[DEBUG] Backend received request for Song ID: ${id}`); 
+
     const song = await songRepo.getSongById(id);
 
-    if (!song) return res.status(404).json({ error: 'Song metadata not found in database' });
+    if (!song) {
+      // If the log prints the ID, but the app crashes here, your database doesn't have a song with that ID!
+      return res.status(404).json({ error: 'Song metadata not found in database' });
+    }
 
     // s3Key represents the exact filename path in your S3 bucket
     const params = {
@@ -22,8 +30,31 @@ const getSongStreamUrl = async (req, res) => {
       streamUrl: url 
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: error.message });
   }
 };
 
-module.exports = { getSongStreamUrl };
+// Add this below your existing getSongStreamUrl function
+const getSongMetadata = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const song = await songRepo.getSongById(id);
+
+    if (!song) {
+      return res.status(404).json({ error: 'Song metadata not found in database' });
+    }
+
+    // Return ONLY the metadata, skipping the S3 signed URL generation
+    res.status(200).json({ 
+      metadata: song 
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Update your exports to include the new function
+module.exports = { getSongStreamUrl, getSongMetadata };
