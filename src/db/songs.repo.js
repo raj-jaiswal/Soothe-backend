@@ -9,5 +9,13 @@ const getSongById = async (songId) => {
   const result = await dynamoDB.get(params).promise();
   return result.Item;
 };
+const getAllSongs = async () => {
+  const params = {
+    TableName: TABLE,
+  };
 
-module.exports = { getSongById };
+  const result = await dynamoDB.scan(params).promise();
+  return result.Items || [];
+};
+
+module.exports = { getSongById, getAllSongs };
