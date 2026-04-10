@@ -71,5 +71,22 @@ const uploadProfilePicture = async (req, res) => {
     res.status(500).json({ error: error.message || 'Unable to upload profile picture' });
   }
 };
+const getHistory = async (req, res) => {
+  try {
+    const history = await userRepo.getUserHistory(req.user.username);
+    res.status(200).json({ history });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-module.exports = { getProfile, updateProfile, uploadProfilePicture };
+const getTopSongs = async (req, res) => {
+  try {
+    const data = await userRepo.getUserTopSongs(req.user.username);
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getProfile, updateProfile, uploadProfilePicture, getHistory, getTopSongs };

@@ -48,4 +48,114 @@ const updateUserStatus = async (username, updates) => {
   return result.Attributes;
 };
 
-module.exports = { createUser, getUserByUsername, updateUserStatus };
+const addSongToHistory = async (username, song) => {
+  const timestamp = new Date().toISOString();
+  
+  // Fetch the user's profile to get current history
+  const userProfile = await getUserByUsername(username);
+  if (!userProfile) return null;
+
+  // Calculate 1 week ago date
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const cutoff = oneWeekAgo.toISOString();
+
+  let history = userProfile.history || [];
+  
+  // Filter out any history older than exactly one week
+  history = history.filter(item => item.timestamp && item.timestamp >= cutoff);
+  
+  const songId = song.song_ID || song.songId || song.id || 'unknown';
+  
+  // Append new listen event to history
+  history.push({
+    songId: songId,
+    timestamp: timestamp,
+    name: song.name || song.title || 'Unknown Song',
+    artist: song.artist || 'Unknown Artist',
+    duration: song.duration || 0,
+  });
+  
+  // Update the user's profile
+  const params = {
+    TableName: TABLE,
+    Key: { PK: `USER#${username}`, SK: 'PROFILE' },
+    UpdateExpression: 'SET history = :history',
+    ExpressionAttributeValues: {
+      ':history': history
+    },
+    ReturnValues: 'ALL_NEW'
+  };
+  
+  const result = await dynamoDB.update(params).promise();
+  return result.Attributes;
+};
+
+const getUserHistory = async (username) => {
+  const userProfile = await getUserByUsername(username);
+  if (!userProfile || !userProfile.history) return [];
+  
+  // Sort history array to show newest items first
+  return userProfile.history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+};
+
+const getUserTopSongs = async (username, limit = 3) => {
+  const userProfile = await getUserByUsername(username);
+  if (!userProfile || !userProfile.history) return { topSongs: [], totalStreams: 0, moods: [] };
+  
+  const history = userProfile.history;
+  const totalStreams = history.length; // Each entry is 1 stream
+
+  // Calculate frequency
+  const songCounts = {};
+  history.forEach(item => {
+    const sId = item.songId;
+    if (!songCounts[sId]) {
+      songCounts[sId] = {
+        id: sId,
+        title: item.name || 'Unknown Song',
+        artist: item.artist || 'Unknown Artist',
+        duration: item.duration || 0,
+        count: 0
+      };
+    }
+    songCounts[sId].count += 1;
+  });
+
+  const uniqueSongs = Object.values(songCounts);
+  
+  const songRepo = require('./songs.repo');
+  const moodAggregation = {};
+
+  for (const s of uniqueSongs) {
+    try {
+      const songMeta = await songRepo.getSongById(s.id);
+      if (songMeta && songMeta.moods) {
+        for (const m of songMeta.moods) {
+          const moodStr = m.S || m; 
+          const normalizedStr = moodStr.charAt(0).toUpperCase() + moodStr.slice(1).toLowerCase();
+          moodAggregation[normalizedStr] = (moodAggregation[normalizedStr] || 0) + s.count;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch mood for song ' + s.id);
+    }
+  }
+
+  const moods = Object.keys(moodAggregation).map(m => ({ label: m, count: moodAggregation[m] }));
+
+  const topSongs = uniqueSongs
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+
+  return { topSongs, totalStreams, moods };
+};
+
+module.exports = { 
+  createUser, 
+  getUserByUsername, 
+  updateUserStatus, 
+  addSongToHistory, 
+  getUserHistory,
+  getUserTopSongs
+};
