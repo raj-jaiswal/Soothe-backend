@@ -1,16 +1,17 @@
+// server.js
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./app');
 require('dotenv').config();
-const chatSocket = require('./sockets/chat.socket');
+const chatSocket = require('./sockets/chat.socket'); // Ensure this path is correct based on your folder structure
 
 const PORT = process.env.PORT || 3000;
-const server = http.createServer(app);
+const server = http.createServer(app); // <-- 1. You created the server here
 
 // Initialize Socket.io
 const io = new Server(server, {
   cors: {
-    origin: '*', // Configure this to your frontend URL in production
+    origin: '*', 
     methods: ['GET', 'POST']
   }
 });
@@ -18,6 +19,7 @@ const io = new Server(server, {
 // Initialize socket handlers
 chatSocket(io);
 
-app.listen(PORT, '0.0.0.0', () => {
+// 🚨 CRITICAL FIX: Change 'app.listen' to 'server.listen' 🚨
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });

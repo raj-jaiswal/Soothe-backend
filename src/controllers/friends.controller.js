@@ -1,12 +1,36 @@
 const friendsRepo = require('../db/friends.repo');
+const userRepo = require('../db/users.repo'); // <-- 1. Import userRepo
+
+// Helper function to attach full profiles to a list of friends
+const attachUserProfiles = async (usersList) => {
+  return await Promise.all(
+    usersList.map(async (user) => {
+      // user.id is typically the username in your setup
+      const profile = await userRepo.getUserByUsername(user.id);
+      
+      return {
+        ...user,
+        // Override name with fullname if it exists, otherwise fallback
+        name: (profile && profile.fullname) ? profile.fullname : user.name,
+        // Grab the profile image
+        profileImage: profile ? profile.profileImage : null,
+      };
+    })
+  );
+};
 
 const search = async (req, res) => {
   try {
     const { q } = req.query;
     if (!q) return res.status(200).json([]);
     
-    const results = await friendsRepo.searchUsers(q, req.user.username);
-    res.status(200).json(results);
+    // Fetch raw results from friendsRepo
+    const rawResults = await friendsRepo.searchUsers(q, req.user.username);
+    
+    // Attach profile images and fullnames
+    const enrichedResults = await attachUserProfiles(rawResults);
+
+    res.status(200).json(enrichedResults);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -17,8 +41,13 @@ const getFriendsList = async (req, res) => {
     const user = await friendsRepo.getUser(req.user.username);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const friendsList = await friendsRepo.getDetailedUsers(user.friends || []);
-    const pendingList = await friendsRepo.getDetailedUsers(user.friendRequests || []);
+    // Fetch the base details from friendsRepo
+    const rawFriendsList = await friendsRepo.getDetailedUsers(user.friends || []);
+    const rawPendingList = await friendsRepo.getDetailedUsers(user.friendRequests || []);
+
+    // Attach profile images and fullnames to both arrays
+    const friendsList = await attachUserProfiles(rawFriendsList);
+    const pendingList = await attachUserProfiles(rawPendingList);
 
     res.status(200).json({ friends: friendsList, pending: pendingList });
   } catch (error) {

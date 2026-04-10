@@ -1,5 +1,6 @@
 const chatRepo = require('../db/chats.repo');
 const friendsRepo = require('../db/friends.repo');
+const userRepo = require('../db/users.repo'); // <-- 1. Import userRepo here
 
 const getChatHistory = async (req, res) => {
   try {
@@ -23,14 +24,18 @@ const getUserChats = async (req, res) => {
       const chatId = [myUsername, friend.id].sort().join('_');
       const latestMsg = await chatRepo.getLatestMessage(chatId);
       
-      // friend.name is now guaranteed to exist by the repo mapping
-      const displayName = friend.name; 
+      // <-- 2. Fetch the full user profile from the users collection
+      const friendProfile = await userRepo.getUserByUsername(friend.id);
+
+      // Extract the fullname, falling back to their ID if missing
+      const displayName = (friendProfile && friendProfile.fullname) ? friendProfile.fullname : friend.id; 
 
       return {
         id: chatId, 
         recipientUsername: friend.id,
         name: displayName,
-        // Safely parse the display name for the avatar API
+        // <-- 3. Grab the profileImage directly from the user profile
+        profileImage: friendProfile ? friendProfile.profileImage : null,
         avatar: `https://ui-avatars.com/api/?name=${displayName.replace(/\s+/g, '+')}`,
         message: latestMsg ? latestMsg.ciphertext : "Start a conversation...", 
         timestamp: latestMsg ? latestMsg.timeStamp : 0,
