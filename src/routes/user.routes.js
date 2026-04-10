@@ -7,6 +7,8 @@ const userController = require('../controllers/user.controller');
 const authenticate = require('../middleware/auth.middleware');
 
 router.get('/me', authenticate, userController.getProfile);
+router.get('/me/history', authenticate, userController.getHistory);
+router.get('/me/top-songs', authenticate, userController.getTopSongs);
 router.put('/me', authenticate, userController.updateProfile);
 router.post('/me/profile-pic', authenticate, upload.single('profileImage'), userController.uploadProfilePicture);
 

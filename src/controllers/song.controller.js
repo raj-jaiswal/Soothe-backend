@@ -1,6 +1,7 @@
 // song.controller.js
 const { s3 } = require('../config/aws');
 const songRepo = require('../db/songs.repo');
+const userRepo = require('../db/users.repo');
 
 const getSongStreamUrl = async (req, res) => {
   try {
@@ -25,6 +26,14 @@ const getSongStreamUrl = async (req, res) => {
 
     const url = await s3.getSignedUrlPromise('getObject', params);
     
+    // Add to listening history asynchronously if authenticated
+    if (req.user && req.user.username) {
+      userRepo.addSongToHistory(req.user.username, song).catch(err => {
+        console.error('[History] Failed to log song history:', err);
+      });
+    }
+
+
     res.status(200).json({ 
       metadata: song,
       streamUrl: url 
