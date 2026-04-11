@@ -2,6 +2,7 @@
 const { s3 } = require('../config/aws');
 const songRepo = require('../db/songs.repo');
 const userRepo = require('../db/users.repo');
+const favouritesRepo = require("../db/favourites.repo");
 
 const getSongStreamUrl = async (req, res) => {
   try {
@@ -67,11 +68,26 @@ const getSongMetadata = async (req, res) => {
 
 const getAllSongs = async (req, res) => {
   try {
+    const userId = req.user.userId || req.user.id;
+
     const songs = await songRepo.getAllSongs();
-    res.status(200).json(songs);
+    const favourites = await favouritesRepo.getUserFavourites(userId);
+
+    const favouriteSongIds = new Set(
+      favourites.map((fav) => String(fav.songId))
+    );
+
+    const songsWithFavouriteFlag = (songs || []).map((song) => ({
+      ...song,
+      isFavourite: favouriteSongIds.has(
+        String(song.song_ID || song.songId || song.id)
+      ),
+    }));
+
+    res.status(200).json(songsWithFavouriteFlag);
   } catch (error) {
-    console.error('Error fetching songs:', error);
-    res.status(500).json({ error: 'Failed to fetch songs' });
+    console.error("Error fetching songs:", error);
+    res.status(500).json({ error: "Failed to fetch songs" });
   }
 };
 

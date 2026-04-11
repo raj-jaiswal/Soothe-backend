@@ -79,7 +79,19 @@ const tablesToCreate = [
       { AttributeName: 'SK', AttributeType: 'S' }
     ],
     ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
-  }
+  },
+  {
+  TableName: process.env.FAVOURITES_TABLE || 'Favourites',
+  KeySchema: [
+    { AttributeName: 'PK', KeyType: 'HASH' },
+    { AttributeName: 'SK', KeyType: 'RANGE' }
+  ],
+  AttributeDefinitions: [
+    { AttributeName: 'PK', AttributeType: 'S' },
+    { AttributeName: 'SK', AttributeType: 'S' }
+  ],
+  ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+}
 ];
 
 const initializeDatabases = async () => {
