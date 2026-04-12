@@ -35,7 +35,7 @@ const BUCKET = process.env.S3_BUCKET;
 
 const songs = [
   // ── A ──────────────────────────────────────────────────────────────────────
-  {
+   {
     songId: 'song_001',
     name: 'Aahista Aahista',
     artist: 'Vishal-Shekhar, Lucky Ali',
@@ -1303,5 +1303,8 @@ const seed = async () => {
 
   console.log('✅  Seeding complete.');
 };
+if (require.main === module) {
+  seed();
+}
 
-seed();
+module.exports = { songs };

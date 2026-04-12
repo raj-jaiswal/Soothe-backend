@@ -95,8 +95,27 @@ const getUserHistory = async (username) => {
   const userProfile = await getUserByUsername(username);
   if (!userProfile || !userProfile.history) return [];
   
-  // Sort history array to show newest items first
-  return userProfile.history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  // 1. Sort history newest first to ensure we keep the latest metadata/timestamp
+  const sorted = userProfile.history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  // 2. Deduplicate while counting frequency
+  const uniqueSongsMap = new Map();
+  
+  sorted.forEach(item => {
+    const sId = item.songId || 'unknown';
+    if (!uniqueSongsMap.has(sId)) {
+      uniqueSongsMap.set(sId, {
+        ...item,
+        playCount: 1
+      });
+    } else {
+      const existing = uniqueSongsMap.get(sId);
+      existing.playCount += 1;
+    }
+  });
+
+  // Return unique songs as an array (already sorted by latest timestamp because we processed newest first)
+  return Array.from(uniqueSongsMap.values());
 };
 
 const getUserTopSongs = async (username, limit = 3) => {
