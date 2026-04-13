@@ -53,6 +53,68 @@ const addSongToPlaylist = async (req, res) => {
   }
 };
 
+const renamePlaylist = async (req, res) => {
+  try {
+    const username = req.user.username;
+    const { playlistId } = req.params;
+    const { nameOfPlaylist } = req.body;
+    const trimmedName = nameOfPlaylist?.trim();
+
+    if (!playlistId) {
+      return res.status(400).json({ error: "playlistId is required" });
+    }
+
+    if (!trimmedName) {
+      return res.status(400).json({ error: "nameOfPlaylist is required" });
+    }
+
+    const updated = await personalPlaylistRepo.renamePersonalPlaylist(
+      username,
+      playlistId,
+      trimmedName
+    );
+
+    return res.status(200).json(updated);
+  } catch (err) {
+    if (err.code === "ConditionalCheckFailedException") {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+
+    console.error("Error renaming playlist:", err);
+    return res.status(500).json({ error: "Failed to rename playlist" });
+  }
+};
+
+const removeSongFromPlaylist = async (req, res) => {
+  try {
+    const username = req.user.username;
+    const { playlistId, songId } = req.params;
+
+    if (!playlistId) {
+      return res.status(400).json({ error: "playlistId is required" });
+    }
+
+    if (!songId) {
+      return res.status(400).json({ error: "songId is required" });
+    }
+
+    const updated = await personalPlaylistRepo.removeSongFromPlaylist(
+      username,
+      playlistId,
+      songId
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Playlist not found" });
+    }
+
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error("Error removing song:", err);
+    return res.status(500).json({ error: "Failed to remove song" });
+  }
+};
+
 const deletePlaylist = async (req, res) => {
   try {
     const username = req.user.username;
@@ -74,4 +136,11 @@ const deletePlaylist = async (req, res) => {
   }
 };
 
-module.exports = { createPlaylist, getMyPlaylists, addSongToPlaylist, deletePlaylist };
+module.exports = {
+  createPlaylist,
+  getMyPlaylists,
+  addSongToPlaylist,
+  renamePlaylist,
+  removeSongFromPlaylist,
+  deletePlaylist,
+};

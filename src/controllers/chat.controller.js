@@ -53,4 +53,41 @@ const getUserChats = async (req, res) => {
   }
 };
 
-module.exports = { getChatHistory, getUserChats };
+const shareMessage = async (req, res) => {
+  try {
+    const senderUsername = req.user.username;
+    const { recipientUsername, ciphertext, iv, messageType } = req.body;
+
+    if (!recipientUsername) {
+      return res.status(400).json({ error: "recipientUsername is required" });
+    }
+
+    if (!ciphertext) {
+      return res.status(400).json({ error: "ciphertext is required" });
+    }
+
+    const user = await friendsRepo.getUser(senderUsername);
+    const friendsList = user?.friends || [];
+
+    if (!friendsList.includes(recipientUsername)) {
+      return res.status(403).json({ error: "You can only share with friends" });
+    }
+
+    const chatId = [senderUsername, recipientUsername].sort().join('_');
+    const message = await chatRepo.saveMessage({
+      chatId,
+      senderUsername,
+      recipientUsername,
+      ciphertext,
+      iv: iv || "default",
+      messageType: messageType || "text",
+    });
+
+    return res.status(201).json(message);
+  } catch (error) {
+    console.error("Error sharing message:", error);
+    return res.status(500).json({ error: "Failed to share message" });
+  }
+};
+
+module.exports = { getChatHistory, getUserChats, shareMessage };

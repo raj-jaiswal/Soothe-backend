@@ -31,4 +31,35 @@ const getLatestMessage = async (chatId) => {
   return result.Items[0] || null;
 };
 
-module.exports = { getChatMessages, getLatestMessage };
+const saveMessage = async ({
+  chatId,
+  senderUsername,
+  recipientUsername,
+  ciphertext,
+  iv,
+  messageType,
+}) => {
+  const timeStamp = Date.now();
+  const { v4: uuidv4 } = require('uuid');
+
+  const messageRecord = {
+    PK: `CHAT#${chatId}`,
+    SK: `MSG#${timeStamp}#${uuidv4()}`,
+    chatId,
+    senderUsername,
+    recipientUsername,
+    ciphertext,
+    iv,
+    messageType,
+    timeStamp,
+  };
+
+  await dynamoDB.put({
+    TableName: TABLE,
+    Item: messageRecord,
+  }).promise();
+
+  return messageRecord;
+};
+
+module.exports = { getChatMessages, getLatestMessage, saveMessage };

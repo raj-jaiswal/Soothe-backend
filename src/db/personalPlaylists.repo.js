@@ -49,6 +49,61 @@ const addSongToPlaylist = async (username, playlistId, songId) => {
   return result.Attributes;
 };
 
+const renamePersonalPlaylist = async (username, playlistId, nameOfPlaylist) => {
+  const params = {
+    TableName: TABLE,
+    Key: {
+      PK: `USER#${username}`,
+      SK: `PLAYLIST#${playlistId}`,
+    },
+    UpdateExpression: "SET nameOfPlaylist = :nameOfPlaylist",
+    ExpressionAttributeValues: {
+      ":nameOfPlaylist": nameOfPlaylist,
+    },
+    ConditionExpression: "attribute_exists(PK) AND attribute_exists(SK)",
+    ReturnValues: "ALL_NEW",
+  };
+
+  const result = await dynamoDB.update(params).promise();
+  return result.Attributes;
+};
+
+const removeSongFromPlaylist = async (username, playlistId, songId) => {
+  const playlist = await dynamoDB
+    .get({
+      TableName: TABLE,
+      Key: {
+        PK: `USER#${username}`,
+        SK: `PLAYLIST#${playlistId}`,
+      },
+    })
+    .promise();
+
+  if (!playlist.Item) {
+    return null;
+  }
+
+  const songs = (playlist.Item.songs || []).filter(
+    (id) => String(id) !== String(songId)
+  );
+
+  const params = {
+    TableName: TABLE,
+    Key: {
+      PK: `USER#${username}`,
+      SK: `PLAYLIST#${playlistId}`,
+    },
+    UpdateExpression: "SET songs = :songs",
+    ExpressionAttributeValues: {
+      ":songs": songs,
+    },
+    ReturnValues: "ALL_NEW",
+  };
+
+  const result = await dynamoDB.update(params).promise();
+  return result.Attributes;
+};
+
 const deletePersonalPlaylist = async (username, playlistId) => {
   const params = {
     TableName: TABLE,
@@ -70,5 +125,7 @@ module.exports = {
   createPersonalPlaylist,
   getPersonalPlaylists,
   addSongToPlaylist,
+  renamePersonalPlaylist,
+  removeSongFromPlaylist,
   deletePersonalPlaylist,
 };
