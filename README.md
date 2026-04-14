@@ -834,7 +834,6 @@ MIT License
 
 - **Divya Swaroop Jaiswal** - https://github.com/raj-jaiswal
 - **Darla Sravan Kumar** - https://github.com/DSK-champ
-- **Divya Swaroop Jaiswal** - https://github.com/raj-jaiswal
 - **Vivekananda Katakam** - https://github.com/VivekanandaK123
 - **Parth Agarwal** - https://github.com/parthagarwal8910
 - **Vennela Jangiti** - https://github.com/vennelajangiti17
