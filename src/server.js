@@ -19,7 +19,6 @@ const io = new Server(server, {
 // Initialize socket handlers
 chatSocket(io);
 
-// 🚨 CRITICAL FIX: Change 'app.listen' to 'server.listen' 🚨
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });

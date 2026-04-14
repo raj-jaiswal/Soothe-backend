@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  soothe-backend:
+    build: .
+    container_name: soothe-backend-container
+    ports:
+      - "3000:3000"
+    # This automatically loads all variables from your .env file
+    env_file:
+      - .env
+    restart: unless-stopped
