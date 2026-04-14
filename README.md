@@ -670,7 +670,6 @@ Messages are end-to-end encrypted and stored in DynamoDB with the following key 
 ---
 
 ## Database Structure
-# DynamoDB Design – Soothe Music App
 
 ## Overview
 This project uses multiple DynamoDB tables, each dedicated to a specific feature:
