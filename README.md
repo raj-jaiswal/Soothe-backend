@@ -670,29 +670,135 @@ Messages are end-to-end encrypted and stored in DynamoDB with the following key 
 ---
 
 ## Database Structure
+# DynamoDB Design – Soothe Music App
 
-The application uses **AWS DynamoDB** for data persistence. The following tables are required:
+## Overview
+This project uses multiple DynamoDB tables, each dedicated to a specific feature:
+- Chats
+- Favorites
+- Personal Playlists
+- Public Playlists
+- Songs
+- Users
 
-### Table: Users
-Stores user account information and credentials.
+The design focuses on clear separation of concerns, simple queries, and scalability.
 
-### Table: Songs
-Contains song metadata, file references, and streaming information.
+---
 
-### Table: Chats
-Stores encrypted messages with chat room organization.
+## Design Approach
 
-### Table: PersonalPlaylists
-User-created playlists with song references.
+- Each feature has its own table
+- Composite keys (PK, SK) used for structured access
+- Prefix-based key design (e.g., USER#, SONG#)
+- Denormalized data to reduce query complexity
 
-### Table: PublicPlaylists
-Community-shared playlists.
+---
 
-### Table: Favourites
-Mapping of users to their favorite songs.
+## Tables and Structure
 
-### Table: Friends
-Friend connections and friend request status.
+### 1. Chats Table
+Stores messages between users.
+
+- PK: CHAT#<user1>_<user2>
+- SK: MSG#<timestamp>#<uuid>
+
+Fields:
+- ciphertext, iv (encrypted message)
+- senderUsername, recipientUsername
+- timeStamp
+
+Access Pattern:
+- Fetch all messages in a chat sorted by time
+
+---
+
+### 2. Favorites Table
+Stores songs liked by users.
+
+- PK: USER#<username>
+- SK: SONG#<songId>
+
+Fields:
+- songId
+- createdAt
+
+Access Pattern:
+- Get all favorite songs of a user
+
+---
+
+### 3. Personal Playlists Table
+Stores playlists created by users.
+
+- PK: USER#<username>
+- SK: PLAYLIST#<playlistId>
+
+Fields:
+- nameOfPlaylist
+- songs[]
+- moods[]
+- createdAt
+
+Access Pattern:
+- Get all playlists for a user
+
+---
+
+### 4. Public Playlists Table
+Stores globally available playlists.
+
+- PK: PLAYLIST#<playlistId>
+- SK: META
+
+Fields:
+- name
+- description
+- songIds[]
+- songCount
+- type
+
+Access Pattern:
+- Fetch playlist metadata and songs
+
+---
+
+### 5. Songs Table
+Stores song metadata and streaming links.
+
+- PK: SONG#<songId>
+- SK: META
+
+Fields:
+- name, artist, album
+- songURL, s3Key
+- moods[]
+
+Access Pattern:
+- Get song details by ID
+
+---
+
+### 6. Users Table
+Stores user profiles and social data.
+
+- PK: USER#<username>
+- SK: PROFILE
+
+Fields:
+- fullname, email, bio
+- friends[], friendRequests[]
+- history[]
+- profileImage
+
+Access Pattern:
+- Get user profile
+- Access friends and listening history
+
+---
+
+## Summary
+
+This design uses DynamoDB in a modular, multi-table approach, making the system easy to understand, extend, and scale while maintaining efficient query performance.
 
 ---
 
