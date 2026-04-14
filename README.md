@@ -70,7 +70,7 @@ The backend is fully containerized and cloud-ready, utilizing AWS services for s
 
 ---
 
-## ✨ Features
+## Features
 
 1. **User Authentication**
    - Sign up with OTP verification
