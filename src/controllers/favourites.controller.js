@@ -1,8 +1,13 @@
 const favouritesRepo = require("../db/favourites.repo");
 
+const getCurrentUserId = (req) => {
+  return req.user.username || req.user.userId || req.user.id;
+};
+
+
 async function getFavourites(req, res) {
   try {
-    const userId = req.user.userId || req.user.id;
+    const userId = getCurrentUserId(req);
 
     const favourites = await favouritesRepo.getUserFavourites(userId);
 
@@ -15,7 +20,7 @@ async function getFavourites(req, res) {
 
 async function addFavourite(req, res) {
   try {
-    const userId = req.user.userId || req.user.id;
+    const userId = getCurrentUserId(req);
     const { songId } = req.params;
 
     const existing = await favouritesRepo.getFavourite(userId, songId);
@@ -41,7 +46,7 @@ async function addFavourite(req, res) {
 
 async function removeFavourite(req, res) {
   try {
-    const userId = req.user.userId || req.user.id;
+    const userId = getCurrentUserId(req);
     const { songId } = req.params;
 
     const existing = await favouritesRepo.getFavourite(userId, songId);

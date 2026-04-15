@@ -75,7 +75,7 @@ const getSongMetadata = async (req, res) => {
 
 const getAllSongs = async (req, res) => {
   try {
-    const userId = req.user.userId || req.user.id;
+    const userId = req.user.username || req.user.userId || req.user.id;
 
     const songs = await songRepo.getAllSongs();
     const favourites = await favouritesRepo.getUserFavourites(userId);
